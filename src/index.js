@@ -6,39 +6,19 @@ import 'regenerator-runtime'
 import * as sdk from 'fission-sdk';
 
 
-//(async () => {
-  console.log('sdk', sdk)
-  sdk.isAuthenticated().then (props => {
-    console.log('authed', props)
+//sdk.initialise().then(async ({ scenario, state }) => {
+  //const { authenticated, newUser, throughLobby, username } = state
+  //console.log('sdk', state)
+  //sdk.isAuthenticated().then (props => {
+    //console.log('authed', props)
 
-    if (props.authenticated) {
+    //if (props.authenticated) {
 
-    } else {
-      sdk.redirectToLobby()
-    }
-  })
-
-//const { scenario, state } = await sdk.initialise()
-
-//if (scenario.authCancelled) {
-  //// User was redirected to lobby,
-  //// but cancelled the authorisation.
-
-//} else if (scenario.authSucceeded || scenario.continuum) {
-  //// State:
-  //// state.authenticated    -  Will always be `true` in these scenarios
-  //// state.newUser          -  If the user is new to Fission
-  //// state.throughLobby     -  If the user authenticated through the lobby, or just came back.
-  //// state.username         -  The user's username.
-  ////
-  //// ☞ We can now interact with our file system (more on that later)
-  //state.fs
-
-//} else if (scenario.notAuthenticated) {
-  //sdk.redirectToLobby()
-
-//}
-//})();
+    //} else {
+      //sdk.redirectToLobby()
+    //}
+  //})
+  //})
 
 
 

@@ -46,11 +46,6 @@ blakejs@^1.1.0:
   resolved "https://registry.yarnpkg.com/blakejs/-/blakejs-1.1.0.tgz#69df92ef953aa88ca51a32df6ab1c54a155fc7a5"
   integrity sha1-ad+S75U6qIylGjLfarHFShVfx6U=
 
-bloomfilter@^0.0.18:
-  version "0.0.18"
-  resolved "https://registry.yarnpkg.com/bloomfilter/-/bloomfilter-0.0.18.tgz#6d55d34f0a214b235287b4eac9203ac623413dab"
-  integrity sha512-CbnyHE78gY1tpXS/Ap+B0RJxKdRWCDzjBnX97UJSG8rdLv1PK8GiTWc/CCQyWu6PWVD4lUceeFrqC6Mf3nMgOA==
-
 borc@^2.1.1:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/borc/-/borc-2.1.2.tgz#6ce75e7da5ce711b963755117dd1b187f6f8cf19"
@@ -113,13 +108,12 @@ esm@^3.2.25:
   resolved "https://registry.yarnpkg.com/esm/-/esm-3.2.25.tgz#342c18c29d56157688ba5ce31f8431fbb795cc10"
   integrity sha512-U1suiZ2oDVWv4zPO56S0NcR5QriEahGtdN2OR6FiOG4WJvcjBVFB0qI4+eKoWFH483PKGuLuu6V8Z4T5g63UVA==
 
-fission-sdk@0.15.0-alpha:
-  version "0.15.0-alpha"
-  resolved "https://registry.yarnpkg.com/fission-sdk/-/fission-sdk-0.15.0-alpha.tgz#ee8c9fa10a3631b96fb8ca5e23e004881b0d6896"
-  integrity sha512-YLN63nio95gPEqhQBMJkVe+iELHsxN7VG0IPrG2MA0Hzr6ApUsrzWAnuXU0mUsgTWEcSvkVpCPtfqlf246KvUQ==
+fission-sdk@0.14.2:
+  version "0.14.2"
+  resolved "https://registry.yarnpkg.com/fission-sdk/-/fission-sdk-0.14.2.tgz#0e5a80c06bfd4ae91f02bf2fa0e5b63253f6e144"
+  integrity sha512-/sqblZ3aPs3JZuxFmv+UHbcPKC4Y9ZM9AUeABFG5JBHIJrCwE2vdhF8nkaJeswWl8U0JUo415i/VNEPO1k9k2A==
   dependencies:
     base58-universal "^1.0.0"
-    bloomfilter "^0.0.18"
     borc "^2.1.1"
     ipld-dag-pb "^0.18.2"
     keystore-idb "^0.13.0"

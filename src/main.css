@@ -12,6 +12,7 @@
 
 @tailwind utilities;
 
+
 [data-elm-hot="true"] {
   height: inherit;
 }
