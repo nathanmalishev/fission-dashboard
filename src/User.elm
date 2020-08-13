@@ -2,7 +2,6 @@ module User exposing (User(..), guestView)
 
 import Browser
 import Constants
-import Deployments exposing (Deployment)
 import Html exposing (Html, a, button, div, h1, h2, h3, img, li, p, span, text, ul)
 import Html.Attributes exposing (alt, class, href, src, type_)
 import Svg exposing (path, svg)
@@ -16,13 +15,9 @@ type User
 
 guestView : Html msg
 guestView =
-    div [ class "bg-white overflow-hidden shadow rounded-lg" ]
-        -- title
-        [ div [ class "flex flex-row justify-center items-center" ]
-            [ img [ src Constants.logoUrl, class "h-12 m-4" ]
-                []
-            , h2 [ class "text-2xl font-bold leading-7 text-grey-900 sm:text-3xl sm:leading-9 sm:truncate" ]
-                [ text "Fission Deployments"
-                ]
-            ]
+    -- really the unauthed or homescreen
+    div [ class "flex flex-col text-lg items-center " ]
+        [ h1 [ class "text-2xl " ]
+            [ text "Login to view all your deployments" ]
+        , button [ class "w-40  bg-indigo-500 hover:bg-blue-700 text-white font-bold mt-4 py-2 px-4 rounded" ] [ text "Login" ]
         ]

@@ -1,4 +1,36 @@
-module Constants exposing (logoUrl)
+module Constants exposing
+    ( deploymentCardBackgroundColor
+    , deploymentCardButtonBgColor
+    , logoUrl
+    , titleBackgroundColor
+    , titleColor
+    , visitButtonColor
+    )
+
+
+titleColor : String
+titleColor =
+    "#2609b1"
+
+
+titleBackgroundColor : String
+titleBackgroundColor =
+    "#f6f7ff"
+
+
+deploymentCardBackgroundColor : String
+deploymentCardBackgroundColor =
+    "#fafafd"
+
+
+deploymentCardButtonBgColor : String
+deploymentCardButtonBgColor =
+    "white"
+
+
+visitButtonColor : String
+visitButtonColor =
+    titleColor
 
 
 logoUrl : String
