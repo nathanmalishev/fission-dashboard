@@ -70,10 +70,19 @@ loadingMock =
     }
 
 
+guestMock : Model
+guestMock =
+    { deployments = RemoteData.Loading
+    , user = User.Guest
+    , deleteModal = Closed
+    , error = Nothing
+    }
+
+
 init : ( Model, Cmd Msg )
 init =
     -- FIXME add flags
-    ( loadingMock
+    ( guestMock
     , Cmd.none
     )
 
@@ -160,15 +169,13 @@ view model =
                                 |> errorView
 
                 User.Guest ->
-                    -- seperate div is needed because it wants to be
-                    -- center page
-                    div [ class "items-center justify-center flex flex-grow" ] [ User.guestView ]
+                    User.guestView
     in
     div [ class "min-h-screen bg-white overflow-hidden shadow rounded-lg flex flex-col " ]
         -----------
         -- title --
         -----------
-        [ div [ class "flex border-b border-gray-200 px-4 py-5 sm:px-6 justify-center", style "background-color" Constants.titleBackgroundColor ]
+        [ div [ class "flex px-4 py-5 sm:px-6 justify-center", style "background-color" Constants.titleBackgroundColor ]
             [ div [ class "flex flex-row justify-center items-center" ]
                 [ img [ src Constants.logoUrl, class "h-12 m-4" ]
                     []
@@ -182,7 +189,7 @@ view model =
         , content
 
         -- Footer
-        , div [ class "flex border-t border-gray-200 px-4 py-4 sm:px-6" ]
+        , div [ class "flex px-4 py-4 sm:px-6", style "background-color" Constants.titleBackgroundColor ]
             [ text "    "
             , text "  "
             ]
@@ -194,7 +201,7 @@ loading =
     let
         loadingComponent =
             div
-                [ class "border border-gray-300 shadow rounded-md p-4 max-w-md w-full mx-auto py-5 mb-4 h-32"
+                [ class "shadow rounded-md p-4 md:w-1/2 w-full mx-auto py-5 mb-4 h-32"
                 , style "background-color" Constants.deploymentCardBackgroundColor
                 ]
                 [ div [ class "animate-pulse flex space-x-4" ]
@@ -211,7 +218,7 @@ loading =
                     ]
                 ]
     in
-    div [ class "flex flex-col flex-grow py-8" ]
+    div [ class "flex flex-col flex-grow space-y-8 py-8" ]
         [ loadingComponent
         , loadingComponent
         ]
@@ -219,10 +226,10 @@ loading =
 
 deploymentsView : ModalState -> List Deployment -> String -> Html Msg
 deploymentsView modalState deployments username =
-    div [ class "px-0 md:px-4 py-5 sm:p-6 mb-4 justify-center flex" ]
+    div [ class "px-0 md:px-4 py-5 sm:p-6 mb-4 justify-center flex flex-grow" ]
         [ case modalState of
             Closed ->
-                ul [ class "flex flex-wrap mb-4 md:w-1/2 w-full" ]
+                ul [ class "flex flex-col mb-4 md:w-1/2 w-full" ]
                     (List.map deploymentCard deployments)
 
             Open deployment ->
@@ -232,7 +239,7 @@ deploymentsView modalState deployments username =
 
 deploymentCard : Deployment -> Html Msg
 deploymentCard deployment =
-    li [ class "w-full flex mb-8 rounded-lg shadow ", style "background-color" Constants.deploymentCardBackgroundColor ]
+    li [ class "h-40 flex mb-8 rounded-lg shadow w-full", style "background-color" Constants.deploymentCardBackgroundColor ]
         [ div [ class "w-full flex items-center justify-between" ]
             [ div [ class "flex flex-col px-2 md:px-8 py-4" ]
                 [ div [ class "flex items-center space-x-3" ]
@@ -350,9 +357,26 @@ deleteModal deployment =
 errorView : String -> Html msg
 errorView errorString =
     div [ class "flex flex-col flex-grow justify-start " ]
-        [ h3 [ class "text-xl my-12" ] [ text errorString ]
+        [ h3 [ class "text-2xl my-12" ] [ text errorString ]
         , h3 [ class "text-xl" ] [ text "Please try again later" ]
-        , h3 [ class "text-xl" ] [ text "In the meantime you can look at our getting started guide or ask our discord for help" ]
+
+        -- FIXME make these error messages nice
+        , h3 [ class "text-xl py-2" ]
+            [ text "& the meantime you can look at our "
+            , a
+                [ style "color" Constants.titleColor
+                , class "underline"
+                , href "https://guide.fission.codes/hosting/getting-started"
+                ]
+                [ text "getting started guide" ]
+            , text " or even jump into our "
+            , a
+                [ style "color" Constants.titleColor
+                , class "underline"
+                , href "https://discord.gg/daDMAjE"
+                ]
+                [ text "discord" ]
+            ]
         ]
 
 
