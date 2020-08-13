@@ -30,6 +30,7 @@ deploymentCardButtonBgColor =
 
 visitButtonColor : String
 visitButtonColor =
+    -- planned
     titleColor
 
 

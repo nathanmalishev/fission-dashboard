@@ -73,7 +73,7 @@ loadingMock =
 init : ( Model, Cmd Msg )
 init =
     -- FIXME add flags
-    ( successMock
+    ( loadingMock
     , Cmd.none
     )
 
@@ -151,8 +151,9 @@ view model =
                             Debug.todo "ask javascript for data"
 
                         RemoteData.Loading ->
-                            -- fixme add a 500ms delay then show loading
-                            Debug.todo "add 500ms delay to loading"
+                            -- FIXME may expereince some flasing without a delay to loading
+                            -- or a forced look at this loading for at least a second
+                            loading
 
                         RemoteData.Failure e ->
                             httpErrorToString e
@@ -185,6 +186,31 @@ view model =
             [ text "    "
             , text "  "
             ]
+        ]
+
+
+loading : Html msg
+loading =
+    let
+        loadingComponent =
+            div [ class "border border-gray-300 shadow rounded-md p-4 max-w-md w-full mx-auto py-5 mb-4 h-32" ]
+                [ div [ class "animate-pulse flex space-x-4" ]
+                    [ div [ class "flex-1 space-y-4 py-1 pl-4" ]
+                        [ div [ class "h-4 bg-gray-400 rounded w-3/4" ]
+                            []
+                        , div [ class "space-y-4" ]
+                            [ div [ class "h-4 bg-gray-400 rounded" ]
+                                []
+                            , div [ class "space-y-2 h-4 bg-gray-400 rounded w-5/6" ]
+                                []
+                            ]
+                        ]
+                    ]
+                ]
+    in
+    div [ class "flex flex-col flex-grow py-8" ]
+        [ loadingComponent
+        , loadingComponent
         ]
 
 
