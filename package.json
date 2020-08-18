@@ -1,8 +1,8 @@
 {
   "dependencies": {
-    "@babel/polyfill": "^7.10.4",
     "@babel/runtime": "^7.11.2",
-    "fission-sdk": "0.14.2",
+    "babel-runtime": "^6.26.0",
+    "fission-sdk": "file:../ts-sdk",
     "regenerator-runtime": "^0.13.7"
   },
   "devDependencies": {}

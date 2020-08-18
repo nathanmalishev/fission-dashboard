@@ -14,8 +14,8 @@ type User
     | User String
 
 
-guestView : Html msg
-guestView =
+guestView : msg -> Html msg
+guestView login =
     -- tried to make this but..
     div [ class "items-center justify-center flex flex-grow" ]
         [ -- really the unauthed or homescreen
@@ -28,6 +28,7 @@ guestView =
                 -- we lose bg:hover for some random reason when using a custom background-color
                 -- but it looks way better this way. The fix is changing the `tailwind.config.js`
                 , style "background-color" "#909dfb"
+                , Html.Events.onClick login
                 ]
                 [ text "Login" ]
             ]
