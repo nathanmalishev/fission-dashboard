@@ -3,14 +3,14 @@ port module Ports exposing (..)
 import AssocList as Dict exposing (Dict)
 import Deployment exposing (DeleteState, Deployment, Key)
 import Dict as StandardDict
-import Json.Decode as Decode exposing (field, map2, string)
+import Json.Decode as Decode exposing (Decoder, Value, decodeValue, dict, field, index, map, map2, string)
 
 
 
 -- send
 
 
-port getDeployments : () -> Cmd msg
+port fetchDeployments : () -> Cmd msg
 
 
 port delete : { key : String, subdomain : String } -> Cmd msg
@@ -19,44 +19,90 @@ port delete : { key : String, subdomain : String } -> Cmd msg
 port login : () -> Cmd msg
 
 
+port create : () -> Cmd msg
+
+
 
 -- recieve
 
 
-port recieveDeployments : (Decode.Value -> msg) -> Sub msg
+port recieveDeployments : (Value -> msg) -> Sub msg
 
 
-
--- FIXME roll deleteDeployment into one
-
-
-port deleteDeploymentSuccess : (String -> msg) -> Sub msg
+port deleteDeployment : (Value -> msg) -> Sub msg
 
 
-port deleteDeploymentFailure : ({ key : String, err : String } -> msg) -> Sub msg
+port createDeployment : (Value -> msg) -> Sub msg
 
 
 
 -------------------------------
--- Deocders
+-- Decoders
 -------------------------------
 
 
-decoderDeployment : Decode.Decoder String
+type Error
+    = Unkown Value
+    | Network DeleteError
+
+
+createDecoder : Value -> Result Error String
+createDecoder json =
+    case decodeValue string json of
+        Ok subdomain ->
+            Ok subdomain
+
+        Err _ ->
+            case decodeValue deleteErrorDecoder json of
+                Ok error ->
+                    Err (Network error)
+
+                Err _ ->
+                    Err (Unkown json)
+
+
+type alias DeleteError =
+    { key : String
+    , err : String
+    }
+
+
+deleteDecoder : Value -> Result Error String
+deleteDecoder json =
+    case decodeValue string json of
+        Ok message ->
+            Ok message
+
+        Err _ ->
+            case decodeValue deleteErrorDecoder json of
+                Ok error ->
+                    Err (Network error)
+
+                Err _ ->
+                    Err (Unkown json)
+
+
+deleteErrorDecoder : Decoder DeleteError
+deleteErrorDecoder =
+    map2 DeleteError
+        (field "key" string)
+        (field "err" string)
+
+
+decoderDeployment : Decoder String
 decoderDeployment =
-    Decode.index 0 string
+    index 0 string
 
 
 dictToDeployments : StandardDict.Dict String String -> Dict Key Deployment
 dictToDeployments dict =
     dict
         |> StandardDict.toList
-        |> List.map (\( k, v ) -> ( Deployment.stringToKey k, Deployment v Deployment.NotAsked ))
+        |> List.map (\( k, v ) -> ( Deployment.stringToKey k, Deployment v Deployment.NotAsked Nothing ))
         |> Dict.fromList
 
 
-decoderDeployments2 : Decode.Decoder (Dict Key Deployment)
+decoderDeployments2 : Decoder (Dict Key Deployment)
 decoderDeployments2 =
-    Decode.map dictToDeployments <|
-        Decode.dict decoderDeployment
-
+    map dictToDeployments <|
+        dict decoderDeployment

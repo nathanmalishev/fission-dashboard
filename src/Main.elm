@@ -23,8 +23,14 @@ type alias Model =
     { deployments : RemoteData Http.Error (Dict Key Deployment)
     , user : User
     , deleteModal : ModalState
-    , error : Maybe Http.Error
+    , create : CreateState
     }
+
+
+type CreateState
+    = NotAsked
+    | Loading
+    | Error String
 
 
 type ModalState
@@ -40,21 +46,18 @@ type alias Flags =
 init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
-        deployments =
-            RemoteData.Loading
-
-        ( user, fetch ) =
+        ( user, fetch, deployments ) =
             case flags.user of
                 Just username ->
-                    ( User.User username, Ports.getDeployments () )
+                    ( User.User username, Ports.fetchDeployments (), RemoteData.Loading )
 
                 Nothing ->
-                    ( User.Guest, Cmd.none )
+                    ( User.Guest, Cmd.none, RemoteData.Loading )
     in
     ( { deployments = deployments
       , user = user
       , deleteModal = Closed
-      , error = Nothing
+      , create = NotAsked
       }
     , fetch
     )
@@ -70,10 +73,11 @@ type Msg
     | CloseDeleteModal
       -- Trigger API calls
     | DeleteDeployment ( Key, Deployment )
+    | CreateDeployment
       -- Recieve data
     | OnFetchedDeployments Decode.Value
-    | OnDeleteDeploymentFailure { key : String, err : String }
-    | OnDeleteDeploymentSuccess String
+    | OnDeletedDeployment (Result Ports.Error String)
+    | OnCreatedDeployment (Result Ports.Error String)
       -- Others
     | Login
     | NoOp
@@ -82,6 +86,9 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        CreateDeployment ->
+            ( { model | create = Loading }, Ports.create () )
+
         Login ->
             ( model, Ports.login () )
 
@@ -90,6 +97,59 @@ update msg model =
 
         CloseDeleteModal ->
             ( { model | deleteModal = Closed }, Cmd.none )
+
+        OnCreatedDeployment result ->
+            case model.deployments of
+                RemoteData.Success deployments ->
+                    case result of
+                        Result.Ok subdomain ->
+                            let
+                                tempKey =
+                                    "key" ++ subdomain
+
+                                nDeployments =
+                                    RemoteData.Success <|
+                                        Dict.insert (Deployment.stringToKey tempKey) (Deployment.new subdomain) deployments
+                            in
+                            -- add subdomain to deployments
+                            ( { model | deployments = nDeployments, create = NotAsked }, Cmd.none )
+
+                        Result.Err _ ->
+                            -- let user know
+                            ( { model | create = Error "Something went wrong creating your new deployment" }
+                            , Cmd.none
+                            )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        OnDeletedDeployment result ->
+            case model.deployments of
+                RemoteData.Success deployments ->
+                    case result of
+                        Result.Ok stringKey ->
+                            let
+                                nDeployments =
+                                    RemoteData.Success <|
+                                        deleteDeployment (Deployment.stringToKey stringKey) deployments
+                            in
+                            ( { model | deployments = nDeployments }, Cmd.none )
+
+                        Result.Err error ->
+                            case error of
+                                Ports.Network { key, err } ->
+                                    let
+                                        nDeployments =
+                                            RemoteData.Success <|
+                                                Dict.update (Deployment.stringToKey key) (Maybe.map (\v -> { v | delete = Deployment.Error err })) deployments
+                                    in
+                                    ( { model | deployments = nDeployments }, Cmd.none )
+
+                                Ports.Unkown _ ->
+                                    ( model, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
 
         DeleteDeployment ( key, deployment ) ->
             -- Call API to delete deployment, change deployment to loading state
@@ -101,32 +161,6 @@ update msg model =
                       }
                     , Ports.delete { key = Deployment.keyToString key, subdomain = deployment.subdomain }
                     )
-
-                _ ->
-                    ( model, Cmd.none )
-
-        OnDeleteDeploymentSuccess key ->
-            case model.deployments of
-                RemoteData.Success deployments ->
-                    let
-                        nDeployments =
-                            RemoteData.Success <|
-                                deleteDeployment (Deployment.stringToKey key) deployments
-                    in
-                    ( { model | deployments = nDeployments }, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none )
-
-        OnDeleteDeploymentFailure { key, err } ->
-            case model.deployments of
-                RemoteData.Success deployments ->
-                    let
-                        nDeployments =
-                            RemoteData.Success <|
-                                Dict.update (Deployment.stringToKey key) (Maybe.map (\v -> { v | delete = Deployment.Error err })) deployments
-                    in
-                    ( { model | deployments = nDeployments }, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
@@ -169,6 +203,14 @@ httpErrorToString error =
 view : Model -> Html Msg
 view model =
     let
+        isCreatingDeployment =
+            case model.create of
+                Loading ->
+                    True
+
+                _ ->
+                    False
+
         content =
             -- auth check
             case model.user of
@@ -176,10 +218,7 @@ view model =
                     case model.deployments of
                         -- data state check
                         RemoteData.Success deployments ->
-                            deploymentsView
-                                model.deleteModal
-                                deployments
-                                username
+                            deploymentsView model.deleteModal deployments username isCreatingDeployment
 
                         RemoteData.Loading ->
                             -- FIXME may experience some flasing without a delay to loading
@@ -246,11 +285,18 @@ loading =
         ]
 
 
-deploymentsView : ModalState -> Dict Key Deployment -> String -> Html Msg
-deploymentsView modalState deployments username =
+deploymentsView : ModalState -> Dict Key Deployment -> String -> Bool -> Html Msg
+deploymentsView modalState deployments username creatingNewDeployment =
+    let
+        deploymentCount =
+            deployments
+                |> Dict.toList
+                |> List.length
+    in
     -- we may want to add the user name in -- perhaps a search bar
-    div [ class "px-0 md:px-4 py-5 sm:p-6 mb-4 justify-center flex flex-grow" ]
-        [ ul [ class "flex flex-col mb-4 md:w-1/2 w-full" ]
+    div [ class "px-0 md:px-4 py-5 sm:p-6 mb-4 justify-center flex flex-grow flex-col w-full content-center" ]
+        [ User.welcomeTab username deploymentCount CreateDeployment creatingNewDeployment
+        , ul [ class "self-center flex flex-col mb-4 md:w-3/4 xl:w-1/2 w-full sm:w-full" ]
             (List.map (Deployment.card OpenDeleteModal) (Dict.toList deployments))
         , case modalState of
             Closed ->
@@ -350,6 +396,6 @@ subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
         [ Ports.recieveDeployments OnFetchedDeployments
-        , Ports.deleteDeploymentSuccess OnDeleteDeploymentSuccess
-        , Ports.deleteDeploymentFailure OnDeleteDeploymentFailure
+        , Ports.deleteDeployment (Ports.deleteDecoder >> OnDeletedDeployment)
+        , Ports.createDeployment (Ports.createDecoder >> OnCreatedDeployment)
         ]
