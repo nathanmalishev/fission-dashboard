@@ -110,7 +110,7 @@ card openDeleteModalMsg ( key, deployment ) =
                             ]
                         ]
                     , a
-                        [ class "flex w-1/2 mx-2 sm:bg-blue-100 md:bg-red-100 bg-green-100 sm:w-40 md:w-64 justify-center h-8 shadow-md bg-white text-indigo-400 hover:bg-indigo-200 font-bold my-1 md:my-0 md:py-0 px-2 rounded-full"
+                        [ class "flex w-1/2 mx-2 sm:w-40 md:w-64 justify-center h-8 shadow-md bg-white text-indigo-400 hover:bg-indigo-200 font-bold my-1 md:my-0 md:py-0 px-2 rounded-full"
                         , href <| "https://drive.fission.codes/#/" ++ deployment.subdomain
                         , target "_blank"
                         ]
