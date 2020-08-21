@@ -267,7 +267,7 @@ view model =
         -----------
         [ div [ class "flex px-4 py-5 sm:px-6 justify-center", style "background-color" Constants.titleBackgroundColor ]
             [ div [ class "flex flex-row justify-center items-center" ]
-                [ img [ src Constants.logoUrl, class "h-12 m-4" ]
+                [ img [ src Constants.logoUrl, class "md:h-16 m-4 h-12" ]
                     []
                 , h2 [ class "text-2xl font-bold leading-7  sm:text-3xl sm:leading-9 sm:truncate ", style "color" Constants.titleColor ]
                     [ text "Fission Deployments"
