@@ -6,3 +6,7 @@ repl-temp-*
 .fission.yaml
 
 /node_modules/
+
+build/
+src/main.output.css
+.DS_STORE
