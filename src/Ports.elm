@@ -53,7 +53,7 @@ port createDeployment : (Value -> msg) -> Sub msg
 
 
 -------------------------------
--- Decoders
+-- Types
 -------------------------------
 
 
@@ -68,20 +68,16 @@ errorToString _ =
     "Sorry we couldn't seem to fetch your deployments right now."
 
 
-createDecoder : Value -> Result Error String
-createDecoder json =
-    case decodeValue string json of
-        Ok subdomain ->
-            Ok subdomain
-
-        Err _ ->
-            decodeError json
-
-
 type alias DeleteError =
     { key : String
     , err : String
     }
+
+
+
+-------------------------------
+-- Json -> elm
+-------------------------------
 
 
 decodeError : Value -> Result Error a
@@ -104,19 +100,14 @@ deleteDecoder json =
             decodeError json
 
 
-deleteErrorDecoder : Decoder DeleteError
-deleteErrorDecoder =
-    Decode.map2 DeleteError
-        (field "key" string)
-        (field "err" string)
+createDecoder : Value -> Result Error String
+createDecoder json =
+    case decodeValue string json of
+        Ok subdomain ->
+            Ok subdomain
 
-
-decoderDeployment : Decoder Deployment
-decoderDeployment =
-    Decode.map3 Deployment
-        (field "subdomain" string)
-        (field "nickName" (Decode.maybe string))
-        (Decode.succeed Deployment.NotAsked)
+        Err _ ->
+            decodeError json
 
 
 dictToDeployments : StandardDict.Dict String Deployment -> Dict Key Deployment
@@ -147,8 +138,35 @@ deploymentsDecoder json =
                     RemoteData.Failure (Unkown json)
 
 
-deploymentsTovalue : Dict Key Deployment -> Value
-deploymentsTovalue deployments =
+
+-------------------------------
+-- Decoders
+-------------------------------
+
+
+deleteErrorDecoder : Decoder DeleteError
+deleteErrorDecoder =
+    Decode.map2 DeleteError
+        (field "key" string)
+        (field "err" string)
+
+
+decoderDeployment : Decoder Deployment
+decoderDeployment =
+    Decode.map3 Deployment
+        (field "subdomain" string)
+        (field "nickName" (Decode.maybe string))
+        (Decode.succeed Deployment.NotAsked)
+
+
+
+-------------------------------
+-- Elm -> Json
+-------------------------------
+
+
+deploymentsToValue : Dict Key Deployment -> Value
+deploymentsToValue deployments =
     deployments
         -- Convert AssocListDict -> Dict
         |> Dict.foldl

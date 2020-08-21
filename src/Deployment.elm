@@ -17,8 +17,6 @@ import Constants
 import Html exposing (Html, a, button, div, h1, h2, h3, img, input, li, p, span, text, ul)
 import Html.Attributes exposing (alt, attribute, class, href, id, property, src, style, target, type_, value)
 import Html.Events exposing (on, onClick, onInput)
-import Json.Decode as JD exposing (Decoder)
-import Json.Encode as JE
 
 
 type Key
@@ -27,11 +25,13 @@ type Key
 
 type alias Deployment =
     { subdomain : String
-
-    --, size : String -- not sure if i can get this stat easily just leaving as string for the moment as it might be deleted
-    -- meta data
     , nickName : Maybe String
     , delete : DeleteState
+
+    -- Future ideas 💡
+    -- -> Size of deployment
+    -- -> Custom domain
+    -- -> Last date deployed
     }
 
 
@@ -39,6 +39,10 @@ type DeleteState
     = NotAsked
     | Deleting
     | Error String
+
+
+
+-- helpers
 
 
 keyToString : Key -> String
@@ -127,10 +131,10 @@ card editNickMsg openDeleteModalMsg ( key, deployment ) =
 
                 -- nickname el
                 , div [ class "flex" ]
-                    [ button [ class "flex flex-row flex-shrink justify-start text-xs sm:text-sm mt-1 text-gray-500 px-2 lg:text-base items-center focus:outline-none" ]
+                    [ div [ class "flex flex-row flex-shrink justify-start text-xs sm:text-sm mt-1 text-gray-500 px-2 lg:text-base items-center focus:outline-none" ]
                         [ input
                             -- had to do some hacky stuff to get a text field to grow with the nickname
-                            -- firstly using p & `contenteditable`, then the onContent hack for elm to detect change
+                            -- Long story short `contenteditable` does not work well with elm - don't even try
                             [ class " rounded text-indigo-500 max-w-full w-full focus:outline-none"
                             , onInput (\string -> editNickMsg ( key, string ))
                             , style "width" (String.fromInt ((String.length nickName + 2) * 8) ++ "px")
@@ -138,7 +142,7 @@ card editNickMsg openDeleteModalMsg ( key, deployment ) =
                             , value nickName
                             ]
                             []
-                        , div [ class "pl-2" ] [ div [ class "w-4 h-4" ] [ Constants.tag ] ]
+                        , div [ class "pl-0" ] [ div [ class "w-4 h-4" ] [ Constants.tag ] ]
                         ]
                     ]
 

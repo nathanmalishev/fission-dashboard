@@ -1,7 +1,6 @@
 import './main.output.css';
 import { Elm } from './Main.elm';
 import * as serviceWorker from './serviceWorker';
-//import 'regenerator-runtime'
 
 import * as sdk from 'fission-sdk';
 
@@ -31,9 +30,14 @@ sdk.initialise().then(async ({ scenario, state }) => {
     }
   });
 
+  //
+  // Login (API)
+  // 
   app.ports.login.subscribe(sdk.redirectToLobby)
 
-  // Saving deployments to localState
+  //
+  // Saving nickname state (asking fs)
+  // 
   app.ports.save.subscribe( async (data) => {
     log("recieve", data)
     try{
@@ -46,6 +50,9 @@ sdk.initialise().then(async ({ scenario, state }) => {
     log("Saved nickname")
   })
 
+  //
+  // Creating deployment (asking API)
+  // 
   app.ports.create.subscribe(async () => {
     try {
       log("Creating deployment")
@@ -59,6 +66,9 @@ sdk.initialise().then(async ({ scenario, state }) => {
   })
 
 
+  //
+  // Deleting deployment (asking API)
+  //
   app.ports.delete.subscribe( async ({key, subdomain}) => {
     try {
       await sdk.apps.deleteByURL(subdomain)
@@ -70,12 +80,13 @@ sdk.initialise().then(async ({ scenario, state }) => {
     
   })
 
-  // design a system for working with API calls & local fission stuff
-  // Fetching a deployment -- what ever the API says is king
+  // Fetching Deployment (API && fs)
+  //
+  // Fetching a deployment stemps -- API takes precendence
   // -> fetch from local state
   // -> fetch from API
-  // -> any matching keys from local state copy `nicknames` to work state
-  // -> rewrite changes (removing old keys etc)
+  // -> any matching keys from local state copy `nicknames` to merged state
+  // -> any think that isn't in the remote state gets deleted
   app.ports.fetchDeployments.subscribe(async function () {
     try {
 

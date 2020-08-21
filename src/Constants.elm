@@ -7,7 +7,7 @@ import Svg.Attributes as SvgA exposing (class, d, fill, stroke, strokeLinecap, s
 
 
 -------------------------------
--- Colors
+-- Colors 🖌️
 -------------------------------
 
 

@@ -28,13 +28,17 @@ type alias Model =
     }
 
 
-type CreateState
+type
+    CreateState
+    -- Used when creating a new deployment
     = NotAsked
     | Loading
     | Error String
 
 
-type ModalState
+type
+    ModalState
+    -- is a delete modal open?
     = Open ( Key, Deployment )
     | Closed
 
@@ -53,6 +57,7 @@ init flags =
                     ( User.User username, Ports.fetchDeployments (), RemoteData.Loading )
 
                 Nothing ->
+                    -- The Appstate itself doesn't model NotAsked
                     ( User.Guest, Cmd.none, RemoteData.Loading )
     in
     ( { deployments = deployments
@@ -87,13 +92,11 @@ type Msg
     | OnFetchedDeployments (RemoteData Ports.Error (Dict Key Deployment))
     | OnDeletedDeployment (Result Ports.Error String)
     | OnCreatedDeployment (Result Ports.Error String)
-      -- Others
-    | Login
-    | NoOp
-      -- Nickname
+      -- Setting Nickname
     | DebounceMsg Debounce.Msg
     | OnChangeNickname ( Key, String )
-    | SaveNickName (Dict Key Deployment)
+      -- Others
+    | Login
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -124,7 +127,7 @@ update msg model =
                 ( debounce, cmd ) =
                     Debounce.update
                         debounceConfig
-                        (Debounce.takeLast (Ports.save << Ports.deploymentsTovalue))
+                        (Debounce.takeLast (Ports.save << Ports.deploymentsToValue))
                         subMsg
                         model.debounce
             in
@@ -133,9 +136,6 @@ update msg model =
               }
             , cmd
             )
-
-        SaveNickName deployments ->
-            ( { model | deployments = RemoteData.Success deployments }, Cmd.none )
 
         CreateDeployment ->
             ( { model | create = Loading }, Ports.create () )
@@ -222,9 +222,6 @@ update msg model =
 
         OnFetchedDeployments deployments ->
             ( { model | deployments = deployments }, Cmd.none )
-
-        NoOp ->
-            ( model, Cmd.none )
 
 
 
@@ -322,7 +319,6 @@ deploymentsView modalState deployments username creatingNewDeployment =
                 |> Dict.toList
                 |> List.length
     in
-    -- we may want to add the user name in -- perhaps a search bar
     div [ class "px-0 md:px-4 py-5 sm:p-6 mb-4 flex flex-grow flex-col w-full content-center" ]
         [ User.welcomeTab username deploymentCount CreateDeployment creatingNewDeployment
         , ul [ class "self-center flex flex-col mb-4 md:w-3/4 xl:w-1/2 w-full sm:w-full" ]

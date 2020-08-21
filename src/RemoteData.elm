@@ -3,7 +3,8 @@ module RemoteData exposing
     , withDefault
     )
 
--- RemoteData without the NotAsked state
+-- RemoteData without the NotAsked state - I felt that the app didn't need a NotAsked state as that should never exist
+-- (But it sort of does when the User is not logged in)
 
 
 type RemoteData e a
