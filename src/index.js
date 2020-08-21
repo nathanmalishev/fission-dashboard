@@ -37,7 +37,6 @@ sdk.initialise().then(async ({ scenario, state }) => {
   app.ports.save.subscribe( async (data) => {
     log("recieve", data)
     try{
-      //await fs.write(appData, data)
       await transaction(
         fs, fs.write, appData, data
       )
