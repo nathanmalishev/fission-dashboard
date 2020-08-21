@@ -3,13 +3,13 @@ module Main exposing (..)
 import AssocList as Dict exposing (Dict)
 import Browser
 import Constants
+import Debounce exposing (Debounce)
 import Deployment exposing (Deployment, Key)
-import Dict as StandardDict
-import Html exposing (Html, a, button, div, h1, h2, h3, img, li, p, span, text, ul)
-import Html.Attributes exposing (alt, attribute, class, href, id, src, style, target, type_)
+import Html exposing (Html, a, button, div, h2, h3, img, li, p, span, text, ul)
+import Html.Attributes exposing (attribute, class, href, id, src, style, type_)
 import Html.Events exposing (onClick)
 import Http
-import Json.Decode as Decode exposing (field, map2, string)
+import Json.Decode as Decode
 import Ports
 import RemoteData exposing (RemoteData)
 import User exposing (User)
@@ -20,10 +20,11 @@ import User exposing (User)
 
 
 type alias Model =
-    { deployments : RemoteData Http.Error (Dict Key Deployment)
+    { deployments : RemoteData Ports.Error (Dict Key Deployment)
     , user : User
     , deleteModal : ModalState
     , create : CreateState
+    , debounce : Debounce (Dict Key Deployment)
     }
 
 
@@ -58,6 +59,7 @@ init flags =
       , user = user
       , deleteModal = Closed
       , create = NotAsked
+      , debounce = Debounce.init
       }
     , fetch
     )
@@ -65,6 +67,13 @@ init flags =
 
 
 ---- UPDATE ----
+
+
+debounceConfig : Debounce.Config Msg
+debounceConfig =
+    { strategy = Debounce.later 1000
+    , transform = DebounceMsg
+    }
 
 
 type Msg
@@ -75,17 +84,59 @@ type Msg
     | DeleteDeployment ( Key, Deployment )
     | CreateDeployment
       -- Recieve data
-    | OnFetchedDeployments Decode.Value
+    | OnFetchedDeployments (RemoteData Ports.Error (Dict Key Deployment))
     | OnDeletedDeployment (Result Ports.Error String)
     | OnCreatedDeployment (Result Ports.Error String)
       -- Others
     | Login
     | NoOp
+      -- Nickname
+    | DebounceMsg Debounce.Msg
+    | OnChangeNickname ( Key, String )
+    | SaveNickName (Dict Key Deployment)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        OnChangeNickname ( key, newNick ) ->
+            case model.deployments of
+                RemoteData.Success deployments ->
+                    let
+                        nDeployments =
+                            Deployment.updateNickName key newNick deployments
+
+                        ( debounce, cmd ) =
+                            Debounce.push debounceConfig nDeployments model.debounce
+                    in
+                    ( { model
+                        | debounce = debounce
+                        , deployments = RemoteData.Success nDeployments
+                      }
+                    , cmd
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        DebounceMsg subMsg ->
+            let
+                ( debounce, cmd ) =
+                    Debounce.update
+                        debounceConfig
+                        (Debounce.takeLast (Ports.save << Ports.deploymentsTovalue))
+                        subMsg
+                        model.debounce
+            in
+            ( { model
+                | debounce = debounce
+              }
+            , cmd
+            )
+
+        SaveNickName deployments ->
+            ( { model | deployments = RemoteData.Success deployments }, Cmd.none )
+
         CreateDeployment ->
             ( { model | create = Loading }, Ports.create () )
 
@@ -103,13 +154,17 @@ update msg model =
                 RemoteData.Success deployments ->
                     case result of
                         Result.Ok subdomain ->
+                            -- !01 returned from the API is the subdomain. So we create a temp key as we don't want to refetc
+                            -- all deployments. But this means when we save the nickname, we are saving it with a rubbish key
+                            -- -> So when we fetch deployments from the API after checking keys, we check to see if any subomains match
+                            -- -> if so great it's a match
                             let
                                 tempKey =
-                                    "key" ++ subdomain
+                                    "key_" ++ subdomain
 
                                 nDeployments =
                                     RemoteData.Success <|
-                                        Dict.insert (Deployment.stringToKey tempKey) (Deployment.new subdomain) deployments
+                                        Deployment.add (Deployment.stringToKey tempKey) (Deployment.new subdomain) deployments
                             in
                             -- add subdomain to deployments
                             ( { model | deployments = nDeployments, create = NotAsked }, Cmd.none )
@@ -131,7 +186,7 @@ update msg model =
                             let
                                 nDeployments =
                                     RemoteData.Success <|
-                                        deleteDeployment (Deployment.stringToKey stringKey) deployments
+                                        Deployment.delete (Deployment.stringToKey stringKey) deployments
                             in
                             ( { model | deployments = nDeployments }, Cmd.none )
 
@@ -141,7 +196,7 @@ update msg model =
                                     let
                                         nDeployments =
                                             RemoteData.Success <|
-                                                Dict.update (Deployment.stringToKey key) (Maybe.map (\v -> { v | delete = Deployment.Error err })) deployments
+                                                Deployment.setDeleteState (Deployment.stringToKey key) (Deployment.Error err) deployments
                                     in
                                     ( { model | deployments = nDeployments }, Cmd.none )
 
@@ -157,7 +212,7 @@ update msg model =
                 RemoteData.Success deploymentValues ->
                     ( { model
                         | deleteModal = Closed
-                        , deployments = RemoteData.Success (Dict.insert key { deployment | delete = Deployment.Deleting } deploymentValues)
+                        , deployments = RemoteData.Success (Deployment.setDeleteState key Deployment.Deleting deploymentValues)
                       }
                     , Ports.delete { key = Deployment.keyToString key, subdomain = deployment.subdomain }
                     )
@@ -165,35 +220,11 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
-        OnFetchedDeployments rawValues ->
-            let
-                deployments =
-                    case Decode.decodeValue Ports.decoderDeployments2 rawValues of
-                        Ok values ->
-                            RemoteData.Success values
-
-                        Err err ->
-                            RemoteData.Failure (Http.BadBody (Decode.errorToString err))
-            in
+        OnFetchedDeployments deployments ->
             ( { model | deployments = deployments }, Cmd.none )
 
         NoOp ->
             ( model, Cmd.none )
-
-
-
----- HELPERS -----
-
-
-deleteDeployment : Key -> Dict Key Deployment -> Dict Key Deployment
-deleteDeployment givenKey deployments =
-    Dict.update givenKey (\_ -> Nothing) deployments
-
-
-httpErrorToString : Http.Error -> String
-httpErrorToString error =
-    -- In the future we may want to provide a specific error
-    "Sorry we couldn't seem to fetch your deployments right now."
 
 
 
@@ -221,12 +252,10 @@ view model =
                             deploymentsView model.deleteModal deployments username isCreatingDeployment
 
                         RemoteData.Loading ->
-                            -- FIXME may experience some flasing without a delay to loading
-                            -- or a forced look at this loading for at least a second
                             loading
 
                         RemoteData.Failure e ->
-                            httpErrorToString e
+                            Ports.errorToString e
                                 |> errorView
 
                 User.Guest ->
@@ -294,10 +323,10 @@ deploymentsView modalState deployments username creatingNewDeployment =
                 |> List.length
     in
     -- we may want to add the user name in -- perhaps a search bar
-    div [ class "px-0 md:px-4 py-5 sm:p-6 mb-4 justify-center flex flex-grow flex-col w-full content-center" ]
+    div [ class "px-0 md:px-4 py-5 sm:p-6 mb-4 flex flex-grow flex-col w-full content-center" ]
         [ User.welcomeTab username deploymentCount CreateDeployment creatingNewDeployment
         , ul [ class "self-center flex flex-col mb-4 md:w-3/4 xl:w-1/2 w-full sm:w-full" ]
-            (List.map (Deployment.card OpenDeleteModal) (Dict.toList deployments))
+            (List.map (Deployment.card OnChangeNickname OpenDeleteModal) (Dict.toList deployments))
         , case modalState of
             Closed ->
                 div [] []
@@ -395,7 +424,7 @@ main =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
-        [ Ports.recieveDeployments OnFetchedDeployments
+        [ Ports.recieveDeployments (Ports.deploymentsDecoder >> OnFetchedDeployments)
         , Ports.deleteDeployment (Ports.deleteDecoder >> OnDeletedDeployment)
         , Ports.createDeployment (Ports.createDecoder >> OnCreatedDeployment)
         ]

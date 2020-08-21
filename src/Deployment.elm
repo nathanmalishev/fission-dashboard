@@ -2,16 +2,23 @@ module Deployment exposing
     ( DeleteState(..)
     , Deployment
     , Key
+    , add
     , card
+    , delete
     , keyToString
     , new
+    , setDeleteState
     , stringToKey
+    , updateNickName
     )
 
+import AssocList as Dict exposing (Dict)
 import Constants
-import Html exposing (Html, a, button, div, h1, h2, h3, img, li, p, span, text, ul)
-import Html.Attributes exposing (alt, attribute, class, href, id, src, style, target, type_)
-import Html.Events exposing (onClick)
+import Html exposing (Html, a, button, div, h1, h2, h3, img, input, li, p, span, text, ul)
+import Html.Attributes exposing (alt, attribute, class, href, id, property, src, style, target, type_, value)
+import Html.Events exposing (on, onClick, onInput)
+import Json.Decode as JD exposing (Decoder)
+import Json.Encode as JE
 
 
 type Key
@@ -23,8 +30,8 @@ type alias Deployment =
 
     --, size : String -- not sure if i can get this stat easily just leaving as string for the moment as it might be deleted
     -- meta data
-    , delete : DeleteState
     , nickName : Maybe String
+    , delete : DeleteState
     }
 
 
@@ -52,14 +59,38 @@ new subdomain =
     }
 
 
+updateNickName : Key -> String -> Dict Key Deployment -> Dict Key Deployment
+updateNickName key newNick deployments =
+    Dict.update key (Maybe.map (\maybeV -> { maybeV | nickName = Just newNick })) deployments
+
+
+delete : Key -> Dict Key Deployment -> Dict Key Deployment
+delete givenKey deployments =
+    Dict.update givenKey (\_ -> Nothing) deployments
+
+
+setDeleteState : Key -> DeleteState -> Dict Key Deployment -> Dict Key Deployment
+setDeleteState key state deployments =
+    Dict.update key (Maybe.map (\v -> { v | delete = state })) deployments
+
+
+add : Key -> Deployment -> Dict Key Deployment -> Dict Key Deployment
+add key deployment deployments =
+    Dict.insert key deployment deployments
+
+
 
 -------------------------------
 -- views
 -------------------------------
 
 
-card : (( Key, Deployment ) -> msg) -> ( Key, Deployment ) -> Html msg
-card openDeleteModalMsg ( key, deployment ) =
+card :
+    (( Key, String ) -> msg)
+    -> (( Key, Deployment ) -> msg)
+    -> ( Key, Deployment )
+    -> Html msg
+card editNickMsg openDeleteModalMsg ( key, deployment ) =
     let
         deleteSVG =
             case deployment.delete of
@@ -82,6 +113,9 @@ card openDeleteModalMsg ( key, deployment ) =
 
                 _ ->
                     div [] []
+
+        nickName =
+            Maybe.withDefault "Add a nickname" deployment.nickName
     in
     li [ class "h-40 flex mb-8 rounded-lg shadow w-full", style "background-color" Constants.deploymentCardBackgroundColor ]
         [ div [ class "w-full flex items-center justify-between md:w-3/4 lg:w-full" ]
@@ -90,10 +124,24 @@ card openDeleteModalMsg ( key, deployment ) =
                     [ h3 [ class "text-blue-900 lg:text-lg text-xs sm:text-sm leading-5 font-medium truncate text-teal-800" ]
                         [ text deployment.subdomain ]
                     ]
-                , p [ class "flex justify-start text-xs sm:text-sm mt-1 text-gray-500 px-2 lg:text-s " ]
-                    [ text ("Deployment size: " ++ "10mb") ]
 
-                --deployment.size) ]
+                -- nickname el
+                , div [ class "flex" ]
+                    [ button [ class "flex flex-row flex-shrink justify-start text-xs sm:text-sm mt-1 text-gray-500 px-2 lg:text-base items-center focus:outline-none" ]
+                        [ input
+                            -- had to do some hacky stuff to get a text field to grow with the nickname
+                            -- firstly using p & `contenteditable`, then the onContent hack for elm to detect change
+                            [ class " rounded text-indigo-500 max-w-full w-full focus:outline-none"
+                            , onInput (\string -> editNickMsg ( key, string ))
+                            , style "width" (String.fromInt ((String.length nickName + 2) * 8) ++ "px")
+                            , style "background-color" Constants.deploymentCardBackgroundColor
+                            , value nickName
+                            ]
+                            []
+                        , div [ class "pl-2" ] [ div [ class "w-4 h-4" ] [ Constants.tag ] ]
+                        ]
+                    ]
+
                 -- buttons below
                 , div
                     [ class "flex flex-col px-0 pt-4 md:flex-row md:w-8/12 " ]

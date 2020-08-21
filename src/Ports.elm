@@ -3,7 +3,20 @@ port module Ports exposing (..)
 import AssocList as Dict exposing (Dict)
 import Deployment exposing (DeleteState, Deployment, Key)
 import Dict as StandardDict
-import Json.Decode as Decode exposing (Decoder, Value, decodeValue, dict, field, index, map, map2, string)
+import Json.Decode as Decode
+    exposing
+        ( Decoder
+        , Value
+        , decodeValue
+        , dict
+        , errorToString
+        , field
+        , map
+        , map2
+        , string
+        )
+import Json.Encode as Encode exposing (encode)
+import RemoteData exposing (RemoteData)
 
 
 
@@ -20,6 +33,9 @@ port login : () -> Cmd msg
 
 
 port create : () -> Cmd msg
+
+
+port save : Value -> Cmd msg
 
 
 
@@ -46,6 +62,12 @@ type Error
     | Network DeleteError
 
 
+errorToString : Error -> String
+errorToString _ =
+    -- In the future we may want to provide a specific error
+    "Sorry we couldn't seem to fetch your deployments right now."
+
+
 createDecoder : Value -> Result Error String
 createDecoder json =
     case decodeValue string json of
@@ -53,18 +75,23 @@ createDecoder json =
             Ok subdomain
 
         Err _ ->
-            case decodeValue deleteErrorDecoder json of
-                Ok error ->
-                    Err (Network error)
-
-                Err _ ->
-                    Err (Unkown json)
+            decodeError json
 
 
 type alias DeleteError =
     { key : String
     , err : String
     }
+
+
+decodeError : Value -> Result Error a
+decodeError json =
+    case decodeValue deleteErrorDecoder json of
+        Ok error ->
+            Err (Network error)
+
+        Err _ ->
+            Err (Unkown json)
 
 
 deleteDecoder : Value -> Result Error String
@@ -74,35 +101,74 @@ deleteDecoder json =
             Ok message
 
         Err _ ->
-            case decodeValue deleteErrorDecoder json of
-                Ok error ->
-                    Err (Network error)
-
-                Err _ ->
-                    Err (Unkown json)
+            decodeError json
 
 
 deleteErrorDecoder : Decoder DeleteError
 deleteErrorDecoder =
-    map2 DeleteError
+    Decode.map2 DeleteError
         (field "key" string)
         (field "err" string)
 
 
-decoderDeployment : Decoder String
+decoderDeployment : Decoder Deployment
 decoderDeployment =
-    index 0 string
+    Decode.map3 Deployment
+        (field "subdomain" string)
+        (field "nickName" (Decode.maybe string))
+        (Decode.succeed Deployment.NotAsked)
 
 
-dictToDeployments : StandardDict.Dict String String -> Dict Key Deployment
+dictToDeployments : StandardDict.Dict String Deployment -> Dict Key Deployment
 dictToDeployments dict =
     dict
         |> StandardDict.toList
-        |> List.map (\( k, v ) -> ( Deployment.stringToKey k, Deployment v Deployment.NotAsked Nothing ))
+        |> List.map (\( k, v ) -> ( Deployment.stringToKey k, v ))
         |> Dict.fromList
 
 
-decoderDeployments2 : Decoder (Dict Key Deployment)
-decoderDeployments2 =
-    map dictToDeployments <|
-        dict decoderDeployment
+deploymentsDecoder : Value -> RemoteData Error (Dict Key Deployment)
+deploymentsDecoder json =
+    let
+        deplomentsDecoder =
+            map dictToDeployments <|
+                dict decoderDeployment
+    in
+    case decodeValue deplomentsDecoder json of
+        Ok values ->
+            RemoteData.Success values
+
+        Err _ ->
+            case decodeValue deleteErrorDecoder json of
+                Ok error ->
+                    RemoteData.Failure (Network error)
+
+                Err _ ->
+                    RemoteData.Failure (Unkown json)
+
+
+deploymentsTovalue : Dict Key Deployment -> Value
+deploymentsTovalue deployments =
+    deployments
+        -- Convert AssocListDict -> Dict
+        |> Dict.foldl
+            (\k v acc ->
+                StandardDict.insert (Deployment.keyToString k) v acc
+            )
+            StandardDict.empty
+        -- Regular Dict we can enocde
+        |> Encode.dict
+            (\k -> k)
+            (\v ->
+                Encode.object
+                    [ ( "subdomain", Encode.string v.subdomain )
+                    , ( "nickName"
+                      , case v.nickName of
+                            Just name ->
+                                Encode.string name
+
+                            Nothing ->
+                                Encode.null
+                      )
+                    ]
+            )
