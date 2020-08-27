@@ -281,7 +281,7 @@ varint@^5.0.0, varint@~5.0.0:
   resolved "https://registry.yarnpkg.com/varint/-/varint-5.0.0.tgz#d826b89f7490732fabc0c0ed693ed475dcb29ebf"
   integrity sha1-2Ca4n3SQcy+rwMDtaT7Uddyynr8=
 
-webnative@^0.14.3:
+webnative@0.14.3:
   version "0.14.3"
   resolved "https://registry.yarnpkg.com/webnative/-/webnative-0.14.3.tgz#6fbb8ae9062cc3fd2c63b05b8d5f9b5251ad0341"
   integrity sha512-QA8tXpf9f7yRscpu4JH7fyFh9qIsL2yYNcN+gUyTxbUzA/BCApnRRBU9gAt5+tq+Q/8D2EKNmwCJfS11qz6oUA==
