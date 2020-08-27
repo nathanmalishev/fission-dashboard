@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@babel/runtime": "^7.11.2",
-    "fission-sdk": "file:../ts-sdk"
+    "webnative": "^0.16.4"
   },
   "devDependencies": {}
 }
