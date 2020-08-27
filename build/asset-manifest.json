@@ -1,15 +1,22 @@
 {
-  "main.css": "/static/css/main.bb16edd2.chunk.css",
-  "main.js": "/static/js/main.779d6677.chunk.js",
-  "main.js.map": "/static/js/main.779d6677.chunk.js.map",
+  "main.css": "/static/css/main.10e95b1d.chunk.css",
+  "main.js": "/static/js/main.1b44f443.chunk.js",
+  "main.js.map": "/static/js/main.1b44f443.chunk.js.map",
   "runtime~main.js": "/static/js/runtime~main.1b922744.js",
   "runtime~main.js.map": "/static/js/runtime~main.1b922744.js.map",
   "vendors~main.js": "/static/js/vendors~main.f4f9e10b.chunk.js",
   "vendors~main.js.map": "/static/js/vendors~main.f4f9e10b.chunk.js.map",
   "./service-worker.js": "/./service-worker.js",
+  ".DS_Store": "/.DS_Store",
+  "android-chrome-192x192.png": "/android-chrome-192x192.png",
+  "android-chrome-512x512.png": "/android-chrome-512x512.png",
+  "apple-touch-icon.png": "/apple-touch-icon.png",
+  "favicon-16x16.png": "/favicon-16x16.png",
+  "favicon-32x32.png": "/favicon-32x32.png",
   "favicon.ico": "/favicon.ico",
   "index.html": "/index.html",
-  "logo.svg": "/logo.svg",
+  "logo.png": "/logo.png",
   "manifest.json": "/manifest.json",
-  "precache-manifest.574347de661065941164786923794b20.js": "/precache-manifest.574347de661065941164786923794b20.js"
+  "precache-manifest.e2b229fc7e076e9d293010e6c70a2cb5.js": "/precache-manifest.e2b229fc7e076e9d293010e6c70a2cb5.js",
+  "site.webmanifest": "/site.webmanifest"
 }
