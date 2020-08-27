@@ -2,7 +2,7 @@ import './main.output.css';
 import { Elm } from './Main.elm';
 import * as serviceWorker from './serviceWorker';
 
-import * as sdk from 'fission-sdk';
+import * as sdk from 'webnative';
 
 function log(...data){
   if (process.env.NODE_ENV == "development") {
