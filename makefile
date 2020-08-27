@@ -6,6 +6,6 @@ build: tailwindcss
 	elm-app build
 
 
-start: tailwindcss
+run: tailwindcss
 	elm-app start
   

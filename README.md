@@ -4,6 +4,8 @@ A deployments dashboard to view all of your fission deployments!!
 
 ### Build
 
+You'll need to install [create-elm-app](https://github.com/halfzebra/create-elm-app) from npm: `npm install create-elm-app -gnpm install create-elm-app -g`
+
 The `makefile` houses each important command. 
 - `make build`
 - `make run`
