@@ -44,9 +44,10 @@ sdk
   app.ports.save.subscribe( async (data) => {
     log("recieve", data)
     try{
-      await transaction(
-        fs, fs.write, appData, data
-      )
+      //await transaction(
+        //fs, fs.write, appData, data
+      //)
+      await fs.write(appData, data)
     } catch(err) {
       log("could not write nickname")
     }
