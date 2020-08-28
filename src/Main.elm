@@ -321,7 +321,7 @@ deploymentsView modalState deployments username creatingNewDeployment =
     in
     div [ class "px-0 md:px-4 py-5 sm:p-6 mb-4 flex flex-grow flex-col w-full content-center" ]
         [ User.welcomeTab username deploymentCount CreateDeployment creatingNewDeployment
-        , ul [ class "self-center flex flex-col mb-4 md:w-3/4 xl:w-1/2 w-full sm:w-full" ]
+        , ul [ class "px-4 md:px-0 self-center flex flex-col mb-4 md:w-3/4 xl:w-1/2 w-full sm:w-full" ]
             (List.map (Deployment.card OnChangeNickname OpenDeleteModal) (Dict.toList deployments))
         , case modalState of
             Closed ->

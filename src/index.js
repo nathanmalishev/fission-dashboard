@@ -11,7 +11,10 @@ function log(...data){
 }
 
 
-sdk.initialise().then(async ({ scenario, state }) => {
+sdk
+  .initialise()
+  .catch(temporaryAlphaCodeHandler)
+  .then(async ({ scenario, state }) => {
   log('sdk', state)
 
   const username = await sdk.authenticatedUsername()
@@ -149,6 +152,28 @@ function merge(local, remote) {
 
   }
 
+
+/**
+ * TODO:
+ * Remove this temporary code when the alpha-tester folks
+ * have upgraded their code. Later we'll have filesystem versioning.
+ */
+async function temporaryAlphaCodeHandler(err) {
+  console.error(err)
+
+  if (
+    err.message.indexOf("Could not find header value: metadata") > -1 ||
+    err.message.indexOf("Could not find index for node") > -1
+  ) {
+    await (await sdk.fs.empty()).publicize()
+    alert("Thanks for testing our alpha version of the Fission SDK. We refactored the file system which is not backwards compatible, so we'll have to create a new file system for you.")
+    return sdk.initialise()
+
+  } else {
+    throw new Error(err)
+
+  }
+}
 
 // TRANSACTIONS - enfore concurrency
 

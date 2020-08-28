@@ -33,7 +33,7 @@ guestView login =
 
 welcomeTab : String -> Int -> msg -> Bool -> Html msg
 welcomeTab username deploymentCount createNewDeployment creatingDeployment =
-    div [ class "px-0 py-0 py-2 mb-6 flex-col flex md:w-3/4 xl:w-1/2 w-full sm:w-full self-center " ]
+    div [ class "md:px-0 md:pl-0 pl-4 px-2 py-0 py-2 mb-6 flex-col flex md:w-3/4 xl:w-1/2 w-full sm:w-full self-center " ]
         [ div [ class "flex flex-row border-b border-indigo-200 justify-between" ]
             [ h3 [ class "text-lg text-blue-900" ]
                 [ text ("Welcome " ++ username)

@@ -123,19 +123,19 @@ card editNickMsg openDeleteModalMsg ( key, deployment ) =
     in
     li [ class "h-40 flex mb-8 rounded-lg shadow w-full", style "background-color" Constants.deploymentCardBackgroundColor ]
         [ div [ class "w-full flex items-center justify-between md:w-3/4 lg:w-full" ]
-            [ div [ class "flex flex-col px-2 sm:px-4 w-full" ]
+            [ div [ class "flex flex-col px-2 sm:px-4 md:w-full w-3/4" ]
                 [ div [ class "flex items-center space-x-3 md:px-2 w-full px-0" ]
-                    [ h3 [ class "text-blue-900 lg:text-lg text-xs sm:text-sm leading-5 font-medium truncate text-teal-800" ]
+                    [ h3 [ class "px-2 md:px-0 text-blue-900 lg:text-lg text-sm sm:text-base leading-5 font-medium truncate text-teal-800" ]
                         [ text deployment.subdomain ]
                     ]
 
                 -- nickname el
                 , div [ class "flex" ]
-                    [ div [ class "flex flex-row flex-shrink justify-start text-xs sm:text-sm mt-1 text-gray-500 px-2 lg:text-base items-center focus:outline-none" ]
+                    [ div [ class "flex flex-row flex-shrink justify-start text-sm sm:text-base mt-1 text-gray-500 px-2 lg:text-base items-center focus:outline-none" ]
                         [ input
-                            -- had to do some hacky stuff to get a text field to grow with the nickname
+                            --⚠️  had to do some hacky stuff to get a text field to grow with the nickname
                             -- Long story short `contenteditable` does not work well with elm - don't even try
-                            [ class " rounded text-indigo-500 max-w-full w-full focus:outline-none"
+                            [ class "  rounded text-indigo-500 max-w-full w-full focus:outline-none"
                             , onInput (\string -> editNickMsg ( key, string ))
                             , style "width" (String.fromInt ((String.length nickName + 2) * 8) ++ "px")
                             , style "background-color" Constants.deploymentCardBackgroundColor
@@ -148,9 +148,9 @@ card editNickMsg openDeleteModalMsg ( key, deployment ) =
 
                 -- buttons below
                 , div
-                    [ class "flex flex-col px-0 pt-4 md:flex-row md:w-8/12 " ]
+                    [ class "flex flex-col px-0 pt-4 md:flex-row md:w-10/12 " ]
                     [ a
-                        [ class "flex mx-2 md:w-56 sm:w-40 justify-center w-1/2 h-8 bg-white shadow-md hover:bg-red-200 text-red-500 font-bold my-1 md:my-0 md:py-0 px-2 rounded-full"
+                        [ class "flex w-3/4 sm:w-1/2 mx-2 md:w-56 sm:w-40 justify-center h-8 bg-white shadow-md hover:bg-red-200 text-red-500 font-bold my-1 md:my-0 md:py-0 px-2 rounded-full"
                         , href "#"
                         , onClick (openDeleteModalMsg ( key, deployment ))
                         ]
@@ -162,7 +162,7 @@ card editNickMsg openDeleteModalMsg ( key, deployment ) =
                             ]
                         ]
                     , a
-                        [ class "flex w-1/2 mx-2 sm:w-40 md:w-64 justify-center h-8 shadow-md bg-white text-indigo-400 hover:bg-indigo-200 font-bold my-1 md:my-0 md:py-0 px-2 rounded-full"
+                        [ class "flex w-3/4 sm:w-1/2 mx-2 sm:w-40 md:w-64 justify-center h-8 shadow-md bg-white text-indigo-400 hover:bg-indigo-200 font-bold my-1 md:my-0 md:py-0 px-2 rounded-full"
                         , href <| "https://drive.fission.codes/#/" ++ deployment.subdomain
                         , target "_blank"
                         ]
@@ -182,12 +182,12 @@ card editNickMsg openDeleteModalMsg ( key, deployment ) =
 
             -- End `visit` button
             , a
-                [ class "flex hover:underline border-l border-gray-200 md:border-l md:border-0"
+                [ class "flex hover:underline border-l border-gray-200 md:border-l md:border-0 flex-grow justify-center"
                 , href ("https://" ++ deployment.subdomain)
                 , style "color" Constants.visitButtonColor
                 , target "_blank"
                 ]
-                [ div [ class "px-0 sm:px-8 py-8 flex " ]
+                [ div [ class " text-center py-8 flex sm:px-8 px-0 " ]
                     [ span [ class "flex items-center " ]
                         [ h3 [ class "m-2 sm:text-base md:text-xl", style "color" Constants.visitButtonColor ]
                             [ text
