@@ -41,7 +41,7 @@ welcomeTab username deploymentCount createNewDeployment creatingDeployment =
             , button [ class "flex flex-row text-lg focus:outline-none text-blue-900", onClick createNewDeployment ]
                 [ text "Create new"
                 , if creatingDeployment then
-                    div [ class "h-5 w-5" ] [ Constants.spinner ]
+                    div [ class "h-6 w-6 py-1 px-1" ] [ Constants.spinnerSvg ]
 
                   else
                     div [ class "w-5" ] []

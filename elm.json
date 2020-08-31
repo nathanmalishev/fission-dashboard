@@ -6,12 +6,14 @@
     "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
+            "avh4/elm-color": "1.0.0",
             "elm/browser": "1.0.2",
             "elm/core": "1.0.4",
             "elm/html": "1.0.0",
             "elm/http": "2.0.0",
             "elm/json": "1.1.2",
             "elm/svg": "1.0.1",
+            "elm-community/typed-svg": "6.0.0",
             "jinjor/elm-debounce": "3.0.0",
             "pzp1997/assoc-list": "1.0.0"
         },

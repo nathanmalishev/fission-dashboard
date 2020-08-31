@@ -51,6 +51,9 @@ port deleteDeployment : (Value -> msg) -> Sub msg
 port createDeployment : (Value -> msg) -> Sub msg
 
 
+port recieveUsername : (Value -> msg) -> Sub msg
+
+
 
 -------------------------------
 -- Types
@@ -80,6 +83,21 @@ type alias DeleteError =
 -------------------------------
 
 
+decodeUsername : Value -> Result Error (Maybe String)
+decodeUsername json =
+    let
+        username =
+            Decode.maybe (field "username" string)
+    in
+    case decodeValue username json of
+        Ok message ->
+            -- We can get a Nothing here, if username is null
+            Ok message
+
+        Err _ ->
+            decodeError json
+
+
 decodeError : Value -> Result Error a
 decodeError json =
     case decodeValue deleteErrorDecoder json of
@@ -90,21 +108,11 @@ decodeError json =
             Err (Unkown json)
 
 
-deleteDecoder : Value -> Result Error String
-deleteDecoder json =
+resultDecoder : Value -> Result Error String
+resultDecoder json =
     case decodeValue string json of
         Ok message ->
             Ok message
-
-        Err _ ->
-            decodeError json
-
-
-createDecoder : Value -> Result Error String
-createDecoder json =
-    case decodeValue string json of
-        Ok subdomain ->
-            Ok subdomain
 
         Err _ ->
             decodeError json

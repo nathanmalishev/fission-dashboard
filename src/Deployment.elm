@@ -108,7 +108,7 @@ card editNickMsg openDeleteModalMsg ( key, deployment ) =
             case deployment.delete of
                 Error _ ->
                     div [ class "px-4 flex flex-row w-full items-center content-center pt-4" ]
-                        [ div [ class "h-5 w-5" ] [ Constants.exclamation "red" ]
+                        [ div [ class "h-5 w-5" ] [ Constants.exclamation ]
                         , div
                             [ class "px-1 text-blue-900"
                             ]
@@ -184,12 +184,12 @@ card editNickMsg openDeleteModalMsg ( key, deployment ) =
             , a
                 [ class "flex hover:underline border-l border-gray-200 md:border-l md:border-0 flex-grow justify-center"
                 , href ("https://" ++ deployment.subdomain)
-                , style "color" Constants.visitButtonColor
+                , style "color" Constants.titleColor
                 , target "_blank"
                 ]
                 [ div [ class " text-center py-8 flex sm:px-8 px-0 " ]
                     [ span [ class "flex items-center " ]
-                        [ h3 [ class "m-2 sm:text-base md:text-xl", style "color" Constants.visitButtonColor ]
+                        [ h3 [ class "m-2 sm:text-base md:text-xl", style "color" Constants.titleColor ]
                             [ text
                                 "Visit"
                             ]

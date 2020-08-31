@@ -10,7 +10,14 @@ function log(...data){
   }
 }
 
+/* render elm app */
 
+const app = Elm.Main.init({
+  node: document.getElementById('root')
+});
+
+
+/* try sdk magic */
 sdk
   .initialise()
   .catch(temporaryAlphaCodeHandler)
@@ -21,17 +28,7 @@ sdk
 
   let fs = { exists : () => false }
   let appData 
-  if (username) {
-    fs = state.fs
-    appData = fs.appPath.private("fissionDeployments.json")
-  }
 
-  const app = Elm.Main.init({
-    node: document.getElementById('root'),
-    flags: {
-      user: username,
-    }
-  });
 
   //
   // Login (API)
@@ -92,6 +89,8 @@ sdk
   // -> any matching keys from local state copy `nicknames` to merged state
   // -> any think that isn't in the remote state gets deleted
   app.ports.fetchDeployments.subscribe(async function () {
+    console.log("fetching deployments")
+    log('Fetching deployments')
     try {
 
       const remoteData = await sdk.apps.index()
@@ -113,6 +112,21 @@ sdk
       app.ports.recieveDeployments.send({err: err.toString()})
     }
   })
+
+
+  /* This code needs to be at the bottom as `recieveUsername` needs the rest of the ports
+       loaded into the script or what not     */
+  if (username) {
+    fs = state.fs
+    appData = fs.appPath.private("fissionDeployments.json")
+    //
+    // recieve username
+    //
+    app.ports.recieveUsername.send({username})
+  } else {
+    app.ports.recieveUsername.send({username: null})
+  }
+
 })
   .catch(err => {
     log("Something went wrong setting up the app", err)
