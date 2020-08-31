@@ -48,7 +48,7 @@ init : ( Model, Cmd Msg )
 init =
     let
         ( user, fetch, deployments ) =
-            ( RemoteData.Failure "error", Cmd.none, RemoteData.Loading )
+            ( RemoteData.Loading, Cmd.none, RemoteData.Loading )
     in
     ( { deployments = deployments
       , user = user
@@ -385,7 +385,7 @@ errorView errorString =
         [ h3 [ class "text-2xl my-12" ] [ text errorString ]
         , h3 [ class "text-xl" ] [ text "Please try again later" ]
         , h3 [ class "text-xl py-2" ]
-            [ text "& the meantime you can look at our "
+            [ text "In the meantime you can look at our "
             , a
                 [ style "color" Constants.titleColor
                 , class "underline"
