@@ -48,7 +48,7 @@ init : ( Model, Cmd Msg )
 init =
     let
         ( user, fetch, deployments ) =
-            ( RemoteData.Loading, Cmd.none, RemoteData.Loading )
+            ( RemoteData.Failure "error", Cmd.none, RemoteData.Loading )
     in
     ( { deployments = deployments
       , user = user
@@ -381,7 +381,7 @@ deleteModal ( key, deployment ) =
 
 errorView : String -> Html msg
 errorView errorString =
-    div [ class "flex flex-col flex-grow justify-start " ]
+    div [ class "flex flex-col flex-grow justify-center items-center " ]
         [ h3 [ class "text-2xl my-12" ] [ text errorString ]
         , h3 [ class "text-xl" ] [ text "Please try again later" ]
         , h3 [ class "text-xl py-2" ]
