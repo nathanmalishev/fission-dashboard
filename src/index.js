@@ -2,7 +2,7 @@ import './main.output.css';
 import { Elm } from './Main.elm';
 import * as serviceWorker from './serviceWorker';
 
-import * as sdk from 'webnative';
+import * as wn from 'webnative';
 
 function log(...data){
   if (process.env.NODE_ENV == "development") {
@@ -12,39 +12,46 @@ function log(...data){
 
 /* render elm app */
 
-const app = Elm.Main.init({
+const elmApp = Elm.Main.init({
   node: document.getElementById('root')
 });
 
 
 /* try sdk magic */
-sdk
-  .initialise()
+wn
+  .initialise({
+    app: {
+      name: "FissionDeployments",
+      creator: "Nathan Malishev"
+    }
+  })
   .catch(temporaryAlphaCodeHandler)
-  .then(async ({ scenario, state }) => {
-  log('sdk', state)
+  .then(async ({ scenario, state, prerequisites }) => {
+  log('state', state)
+  //log('scenario', scenario)
 
-  const username = await sdk.authenticatedUsername()
+  const username = await wn.authenticatedUsername()
+  console.log("hello", username)
 
-  let fs = { exists : () => false }
-  let appData 
+  let fs = state.fs
+  const elmAppData = fs.appPath(["fissionDeployments.json"])
 
 
   //
   // Login (API)
   // 
-  app.ports.login.subscribe(sdk.redirectToLobby)
+  elmApp.ports.login.subscribe(() => wn.redirectToLobby(prerequisites))
 
   //
   // Saving nickname state (asking fs)
   // 
-  app.ports.save.subscribe( async (data) => {
+  elmApp.ports.save.subscribe( async (data) => {
     log("recieve", data)
     try{
       //await transaction(
-        //fs, fs.write, appData, data
+        //fs, fs.write, elmAppData, data
       //)
-      await fs.write(appData, data)
+      await fs.write(elmAppData, data)
     } catch(err) {
       log("could not write nickname")
     }
@@ -54,14 +61,14 @@ sdk
   //
   // Creating deployment (asking API)
   // 
-  app.ports.create.subscribe(async () => {
+  elmApp.ports.create.subscribe(async () => {
     try {
       log("Creating deployment")
-      const newDeployment = await sdk.apps.create()
-      app.ports.createDeployment.send(newDeployment)
+      const newDeployment = await wn.apps.create()
+      elmApp.ports.createDeployment.send(newDeployment)
     } catch (err) {
       log("Error creating deployment", err)
-      app.ports.createDeployment.send({err: err.toString()})
+      elmApp.ports.createDeployment.send({err: err.toString()})
     }
 
   })
@@ -70,13 +77,13 @@ sdk
   //
   // Deleting deployment (asking API)
   //
-  app.ports.delete.subscribe( async ({key, subdomain}) => {
+  elmApp.ports.delete.subscribe( async ({key, subdomain}) => {
     try {
-      await sdk.apps.deleteByURL(subdomain)
-      app.ports.deleteDeployment.send(key)
+      await wn.apps.deleteByURL(subdomain)
+      elmApp.ports.deleteDeployment.send(key)
     } catch (err) {
       log("Error deleting deployment", err)
-      app.ports.deleteDeployment.send({key: key, err: err.toString()})
+      elmApp.ports.deleteDeployment.send({key: key, err: err.toString()})
     }
     
   })
@@ -88,28 +95,28 @@ sdk
   // -> fetch from API
   // -> any matching keys from local state copy `nicknames` to merged state
   // -> any think that isn't in the remote state gets deleted
-  app.ports.fetchDeployments.subscribe(async function () {
+  elmApp.ports.fetchDeployments.subscribe(async function () {
     console.log("fetching deployments")
     log('Fetching deployments')
     try {
 
-      const remoteData = await sdk.apps.index()
+      const remoteData = {} //await wn.apps.index()
 
-      if (await fs.exists(appData)) {
+      if (await fs.exists(elmAppData)) {
         //cache exists
-        const localData = await fs.cat(appData)
+        const localData = await fs.cat(elmAppData)
         const mergedData = merge(localData, remoteData)
-        app.ports.recieveDeployments.send(mergedData)
+        elmApp.ports.recieveDeployments.send(mergedData)
         return
       } 
         log('Local data not found', remoteData)
-        // still need to run merge as it's the format app is expecting
+        // still need to run merge as it's the format elmApp is expecting
         const mergedData = merge({}, remoteData)
-        app.ports.recieveDeployments.send(mergedData)
+        elmApp.ports.recieveDeployments.send(mergedData)
 
     } catch (err) {
       log("Error fetching deployments", err)
-      app.ports.recieveDeployments.send({err: err.toString()})
+      elmApp.ports.recieveDeployments.send({err: err.toString()})
     }
   })
 
@@ -117,19 +124,17 @@ sdk
   /* This code needs to be at the bottom as `recieveUsername` needs the rest of the ports
        loaded into the script or what not     */
   if (username) {
-    fs = state.fs
-    appData = fs.appPath.private("fissionDeployments.json")
     //
     // recieve username
     //
-    app.ports.recieveUsername.send({username})
+    elmApp.ports.recieveUsername.send({username})
   } else {
-    app.ports.recieveUsername.send({username: null})
+    elmApp.ports.recieveUsername.send({username: null})
   }
 
 })
   .catch(err => {
-    log("Something went wrong setting up the app", err)
+    log("Something went wrong setting up the elmApp", err)
   })
 
 
@@ -178,17 +183,23 @@ async function temporaryAlphaCodeHandler(err) {
 
   if (
     err.message.indexOf("Could not find header value: metadata") > -1 ||
-    err.message.indexOf("Could not find index for node") > -1
+    err.message.indexOf("Could not find index for node") > -1 ||
+    err.message.indexOf("Could not parse a valid private tree using the given key") > -1
   ) {
-    await (await sdk.fs.empty()).publicize()
-    alert("Thanks for testing our alpha version of the Fission SDK. We refactored the file system which is not backwards compatible, so we'll have to create a new file system for you.")
-    return sdk.initialise()
+    const result = confirm("Thanks for testing the alpha version of the webnative sdk. We refactored the file system which is not backwards compatible. Do you want to create a new file system?")
+
+    if (result) {
+      fs = await wn.fs.empty({ keyName: "filesystem-lobby", prerequisites: pre })
+      await saveSelectionHistory([]) // do a crud operation to trigger a mutation + publicise
+      return fs
+    }
 
   } else {
     throw new Error(err)
 
   }
 }
+
 
 // TRANSACTIONS - enfore concurrency
 
