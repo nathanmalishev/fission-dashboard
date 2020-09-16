@@ -16,22 +16,20 @@ const elmApp = Elm.Main.init({
   node: document.getElementById('root')
 });
 
-
-/* try sdk magic */
-wn
-  .initialise({
+const PERMISSIONS = {
     app: {
       name: "FissionDeployments",
       creator: "Nathan Malishev"
     }
-  })
-  .catch(temporaryAlphaCodeHandler)
-  .then(async ({ scenario, state, prerequisites }) => {
-  log('state', state)
-  //log('scenario', scenario)
+}
 
-  const username = await wn.authenticatedUsername()
-  console.log("hello", username)
+/* try sdk magic */
+wn
+  .initialise({ permissions: PERMISSIONS })
+  .catch(temporaryAlphaCodeHandler)
+  .then(async state => {
+    const { authenticated, newUser, throughLobby, username } = state
+  log('state', state)
 
   let fs = state.fs
   const elmAppData = fs.appPath(["fissionDeployments.json"])
@@ -96,11 +94,10 @@ wn
   // -> any matching keys from local state copy `nicknames` to merged state
   // -> any think that isn't in the remote state gets deleted
   elmApp.ports.fetchDeployments.subscribe(async function () {
-    console.log("fetching deployments")
     log('Fetching deployments')
     try {
 
-      const remoteData = {} //await wn.apps.index()
+      const remoteData = await wn.apps.index()
 
       if (await fs.exists(elmAppData)) {
         //cache exists
@@ -189,7 +186,7 @@ async function temporaryAlphaCodeHandler(err) {
     const result = confirm("Thanks for testing the alpha version of the webnative sdk. We refactored the file system which is not backwards compatible. Do you want to create a new file system?")
 
     if (result) {
-      fs = await wn.fs.empty({ keyName: "filesystem-lobby", prerequisites: pre })
+      fs = await wn.fs.empty({ keyName: "filesystem-lobby", permissions: PERMISSIONS })
       await saveSelectionHistory([]) // do a crud operation to trigger a mutation + publicise
       return fs
     }
