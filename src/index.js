@@ -23,6 +23,8 @@ const PERMISSIONS = {
     }
 }
 
+let fs
+
 /* try sdk magic */
 wn
   .initialise({ permissions: PERMISSIONS })
@@ -32,13 +34,11 @@ wn
   log('state', state)
 
   let fs = state.fs
-  const elmAppData = fs.appPath(["fissionDeployments.json"])
-
 
   //
   // Login (API)
   // 
-  elmApp.ports.login.subscribe(() => wn.redirectToLobby(prerequisites))
+  elmApp.ports.login.subscribe(() => wn.redirectToLobby(PERMISSIONS))
 
   //
   // Saving nickname state (asking fs)
@@ -46,10 +46,7 @@ wn
   elmApp.ports.save.subscribe( async (data) => {
     log("recieve", data)
     try{
-      //await transaction(
-        //fs, fs.write, elmAppData, data
-      //)
-      await fs.write(elmAppData, data)
+      await fs.write(fs.appPath(["fissionDeployments.json"]), data)
     } catch(err) {
       log("could not write nickname")
     }
@@ -99,9 +96,9 @@ wn
 
       const remoteData = await wn.apps.index()
 
-      if (await fs.exists(elmAppData)) {
+      if (await fs.exists(fs.appPath(["fissionDeployments.json"]))) {
         //cache exists
-        const localData = await fs.cat(elmAppData)
+        const localData = await fs.cat(fs.appPath(["fissionDeployments.json"]))
         const mergedData = merge(localData, remoteData)
         elmApp.ports.recieveDeployments.send(mergedData)
         return
@@ -131,7 +128,7 @@ wn
 
 })
   .catch(err => {
-    log("Something went wrong setting up the elmApp", err)
+    console.log("Something went wrong setting up the elmApp", err)
   })
 
 
@@ -170,6 +167,7 @@ function merge(local, remote) {
   }
 
 
+
 /**
  * TODO:
  * Remove this temporary code when the alpha-tester folks
@@ -187,7 +185,7 @@ async function temporaryAlphaCodeHandler(err) {
 
     if (result) {
       fs = await wn.fs.empty({ keyName: "filesystem-lobby", permissions: PERMISSIONS })
-      await saveSelectionHistory([]) // do a crud operation to trigger a mutation + publicise
+      await transaction(fs.write, fs.appPath(["alpha.test"]), "") // do a crud operation to trigger a mutation + publicise
       return fs
     }
 
@@ -198,26 +196,55 @@ async function temporaryAlphaCodeHandler(err) {
 }
 
 
-// TRANSACTIONS - enfore concurrency
+// TRANSACTIONS
+// ⚠️ Will be removed soon
 
-const transactionQueue = []
+
+const transactions = {
+  queue: [],
+  finished: true
+}
+
+
+/**
+ * Process the next item in the transaction queue.
+ */
+async function nextTransaction() {
+  transactions.finished = false
+  if (nextTransactionWithoutPublish()) return
+  await fs.publish()
+  if (nextTransactionWithoutPublish()) return
+  transactions.finished = true
+}
+
+function nextTransactionWithoutPublish() {
+  const nextAction = transactions.queue.shift()
+  if (nextAction) {
+    setTimeout(nextAction, 16)
+    return true
+  } else {
+    return false
+  }
+}
 
 
 /**
  * The Fission filesystem doesn't support parallel writes yet.
  * This function is a way around that.
  *
- * @param fs The filesystem to run
- * @param method The arguments for the given filesystem 
- * @param args The arguments for the given filesystem method
+ * @param method The filesystem method to run
+ * @param methodArguments The arguments for the given filesystem method
  */
-async function transaction (fs, promise, ...args) {
-  transactionQueue.push( {promise, args: args} )
-  while (transactionQueue.length) {
-    await Promise.all( transactionQueue.splice(0, 1).map(f => f.promise.apply(fs, f.args)) )
+async function transaction(method, ...methodArguments) {
+  transactions.queue.push(async () => {
+    await method.apply(fs, methodArguments)
+    await nextTransaction()
+  })
+
+  if (transactions.finished) {
+    nextTransaction()
   }
 }
-
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
 // Learn more about service workers: https://bit.ly/CRA-PWA
